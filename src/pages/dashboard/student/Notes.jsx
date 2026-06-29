@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { getNoteFileUrl, listNotes, deleteNote } from '../../../api';
 
@@ -9,15 +9,7 @@ export default function Notes() {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch notes on mount and set up real-time polling
-  useEffect(() => {
-    fetchNotes();
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchNotes, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     try {
       const r = await listNotes();
       setNotes(r.data?.data || r.data || []);
@@ -27,7 +19,15 @@ export default function Notes() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
+
+  // Fetch notes on mount and set up real-time polling
+  useEffect(() => {
+    fetchNotes();
+    // Poll for updates every 5 seconds
+    const interval = setInterval(fetchNotes, 5000);
+    return () => clearInterval(interval);
+  }, [fetchNotes]);
 
   const handleRefresh = () => {
     setRefreshing(true);
